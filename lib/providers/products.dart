@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../models/product.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'product.dart';
 
 class Products with ChangeNotifier {
   List<Product> _items = [
@@ -42,12 +43,48 @@ class Products with ChangeNotifier {
     return [..._items];
   }
 
+  List<Product> get favoriteItem{
+    return _items.where((prodItem) => prodItem.isFavorite).toList();
+  }
+
   Product findById(String id) {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
-  void addProduct() {
-    // _items.add(value);
+  void addProduct(Product product) {
+    final url = Uri.https('shop-624d0-default-rtdb.firebaseio.com/', '/products.json');
+    try {http.post(url,  body: json.encode({
+        'title': product.title,
+        'description': product.description,
+        'imageUrl': product.imageUrl,
+        'price': product.price,
+        'isFavorite': product.isFavorite,
+      }),
+    )
+        .then((response) {
+      final newProduct = Product(
+        title: product.title,
+        description: product.description,
+        price: product.price,
+        imageUrl: product.imageUrl,
+        id: json.decode(response.body)['name'],
+      );
+      _items.add(newProduct);
+      // _items.insert(0, newProduct); // at the start of the list
+      notifyListeners();
+    });}catch(e){print(e);};
+  }
+  void updateProduct(String id, Product newProduct) {
+    final prodIndex = _items.indexWhere((prod) => prod.id == id);
+    if (prodIndex >= 0) {
+      _items[prodIndex] = newProduct;
+      notifyListeners();
+    } else {
+      print('...');
+    }
+  }
+  void deleteProduct(String id){
+    _items.removeWhere((prod)=> prod.id == id);
     notifyListeners();
   }
 }
