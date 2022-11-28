@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'product.dart';
+
+import './product.dart';
 
 class Products with ChangeNotifier {
   List<Product> _items = [
@@ -38,12 +40,16 @@ class Products with ChangeNotifier {
       'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cast-Iron-Pan.jpg/1024px-Cast-Iron-Pan.jpg',
     ),
   ];
+  // var _showFavoritesOnly = false;
 
   List<Product> get items {
+    // if (_showFavoritesOnly) {
+    //   return _items.where((prodItem) => prodItem.isFavorite).toList();
+    // }
     return [..._items];
   }
 
-  List<Product> get favoriteItem{
+  List<Product> get favoriteItems {
     return _items.where((prodItem) => prodItem.isFavorite).toList();
   }
 
@@ -51,9 +57,20 @@ class Products with ChangeNotifier {
     return _items.firstWhere((prod) => prod.id == id);
   }
 
-  void addProduct(Product product) {
-    final url = Uri.https('shop-624d0-default-rtdb.firebaseio.com/', '/products.json');
-    try {http.post(url,  body: json.encode({
+  // void showFavoritesOnly() {
+  //   _showFavoritesOnly = true;
+  //   notifyListeners();
+  // }
+
+  // void showAll() {
+  //   _showFavoritesOnly = false;
+  //   notifyListeners();
+  // }
+
+  Future<void>addProduct(Product product) async{
+    final url = Uri.parse('shop-624d0-default-rtdb.firebaseio.com/product.json');
+    return await http.post(url,
+      body: json.encode({
         'title': product.title,
         'description': product.description,
         'imageUrl': product.imageUrl,
@@ -72,8 +89,10 @@ class Products with ChangeNotifier {
       _items.add(newProduct);
       // _items.insert(0, newProduct); // at the start of the list
       notifyListeners();
-    });}catch(e){print(e);};
+    });
+
   }
+
   void updateProduct(String id, Product newProduct) {
     final prodIndex = _items.indexWhere((prod) => prod.id == id);
     if (prodIndex >= 0) {
@@ -83,8 +102,9 @@ class Products with ChangeNotifier {
       print('...');
     }
   }
-  void deleteProduct(String id){
-    _items.removeWhere((prod)=> prod.id == id);
+
+  void deleteProduct(String id) {
+    _items.removeWhere((prod) => prod.id == id);
     notifyListeners();
   }
 }
